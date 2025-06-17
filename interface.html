@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Verificador de Cupom Fiscal</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 30px;
+            background-color: #f9f9f9;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+        }
+        input[type="file"] {
+            margin: 15px 0;
+        }
+        .resultado {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: #fff;
+            box-shadow: 0 0 8px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .erro {
+            color: red;
+        }
+        .ok {
+            color: green;
+        }
+        textarea {
+            width: 90%;
+            height: 120px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Verificador de Cupom Fiscal</h1>
+
+    <form id="formulario">
+        <input type="file" name="imagem" id="imagem" accept="image/*" required>
+        <br>
+        <button type="submit">Verificar</button>
+    </form>
+
+    <div class="resultado" id="resultado">
+        <h2>Resultado:</h2>
+        <p id="mensagem" class="ok"></p>
+        <p><strong>Confiança:</strong> <span id="confianca"></span>%</p>
+        <p><strong>Texto Extraído:</strong></p>
+        <textarea readonly id="texto"></textarea>
+    </div>
+
+    <script>
+        const form = document.getElementById('formulario');
+        const resultado = document.getElementById('resultado');
+        const mensagem = document.getElementById('mensagem');
+        const confianca = document.getElementById('confianca');
+        const texto = document.getElementById('texto');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            resultado.style.display = 'none';
+
+            const imagem = document.getElementById('imagem').files[0];
+            if (!imagem) return;
+
+            const formData = new FormData();
+            formData.append('imagem', imagem);
+
+            try {
+                const res = await fetch('http://localhost:5000/verificar', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    mensagem.className = 'erro';
+                    mensagem.textContent = data.erro || 'Erro inesperado.';
+                } else {
+                    mensagem.className = 'ok';
+                    mensagem.textContent = data.resultado;
+                    confianca.textContent = data.confiança;
+                    texto.value = data.texto_extraido;
+                }
+
+                resultado.style.display = 'block';
+            } catch (err) {
+                alert('Erro ao enviar imagem: ' + err.message);
+            }
+        });
+    </script>
+</body>
+</html>
